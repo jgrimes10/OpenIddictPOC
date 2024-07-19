@@ -1,0 +1,8 @@
+<nav class="bg-indigo-600 p-4">
+    <div class="container mx-auto flex justify-between items-center">
+        <div class="text-white text-2xl font-bold">Identity POC</div>
+        <div *ngIf="isLoggedIn" class="text-white">
+            <button (click)="logout()" class="bg-red-600 px-4 py-2 rounded">Logout</button>
+        </div>
+    </div>
+</nav>

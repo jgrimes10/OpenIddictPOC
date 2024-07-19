@@ -1,0 +1,25 @@
+<div class="min-h-screen flex items-center justify-center bg-indigo-100">
+    <div class="max-w-md w-full bg-white shadow-md rounded-lg p-8">
+        <h2 class="text-2xl font-bold mb-6 text-center">Register</h2>
+
+        <app-alert />
+
+        <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+            <div class="mb-4">
+                <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
+                <input formControlName="username" type="text" id="username" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+            </div>
+            <div class="mb-6">
+                <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                <input formControlName="password" type="password" id="password" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+            </div>
+
+            <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md shadow hover:bg-indigo-700 focus:outline-none">Sign Up</button>
+        </form>
+
+        <p class="mt-4 text-center text-sm text-gray-600">
+            Already have an account?
+            <a routerLink="/login" class="text-indigo-600 hover:underline">Log In</a>
+        </p>
+    </div>
+</div>
