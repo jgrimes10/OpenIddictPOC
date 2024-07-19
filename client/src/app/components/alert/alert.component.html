@@ -1,9 +1,13 @@
-<div *ngIf="alert" [ngClass]="alertClasses" class="border px-4 py-3 mb-4 rounded relative" role="alert">
+<div *ngIf="alert" [ngClass]="alertClasses" class="border px-4 py-3 mb-4 rounded relative flex items-center" role="alert">
+    <div class="mr-2">
+        <app-success-icon *ngIf="alert.type === 'success'" />
+        <app-info-icon *ngIf="alert.type === 'info'" />
+        <app-warning-icon *ngIf="alert.type === 'warning'" />
+        <app-danger-icon *ngIf="alert.type === 'danger'" />
+    </div>
     <span class="block sm:inline">{{ alert?.message }}</span>
     <span (click)="closeAlert()" class="absolute top-1 bottom-0 right-0 mx-4 my-3 hover:cursor-pointer">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-circle"
-             viewBox="0 0 16 16">
-            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16">
             <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
         </svg>
     </span>

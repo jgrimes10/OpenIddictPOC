@@ -1,8 +1,32 @@
-<nav class="bg-indigo-600 p-4">
-    <div class="container mx-auto flex justify-between items-center">
-        <div class="text-white text-2xl font-bold">Identity POC</div>
-        <div *ngIf="isLoggedIn" class="text-white">
-            <button (click)="logout()" class="bg-red-600 px-4 py-2 rounded">Logout</button>
+<nav class="flex items-center justify-between flex-wrap bg-teal-500 p-6">
+    <div class="flex items-center flex-shrink-0 text-white mr-6">
+        <div class="pr-3">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-person-badge" viewBox="0 0 16 16">
+            <path d="M6.5 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1zM11 8a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/>
+            <path d="M4.5 0A2.5 2.5 0 0 0 2 2.5V14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2.5A2.5 2.5 0 0 0 11.5 0zM3 2.5A1.5 1.5 0 0 1 4.5 1h7A1.5 1.5 0 0 1 13 2.5v10.795a4.2 4.2 0 0 0-.776-.492C11.392 12.387 10.063 12 8 12s-3.392.387-4.224.803a4.2 4.2 0 0 0-.776.492z"/>
+        </svg>
+        </div>
+        <span class="font-semibold text-xl tracking-tight">Identity App</span>
+    </div>
+    <div class="block lg:hidden">
+        <button
+            class="flex items-center px-3 py-2 border rounded text-teal-200 border-teal-400 hover:text-white hover:border-white">
+            <svg class="fill-current h-3 w-3" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><title>Menu</title>
+                <path d="M0 3h20v2H0V3zm0 6h20v2H0V9zm0 6h20v2H0v-2z"/>
+            </svg>
+        </button>
+    </div>
+    <div class="w-full block flex-grow lg:flex lg:items-center lg:w-auto">
+        <div class="text-sm lg:flex-grow">
+            <a routerLink="/home" class="block mt-4 lg:inline-block lg:mt-0 text-teal-200 hover:text-white mr-4">
+                Home
+            </a>
+        </div>
+        <div>
+            <div *ngIf="isLoggedIn" class="text-white">
+                <button (click)="logout()" class="border px-4 py-2 rounded">Logout</button>
+            </div>
         </div>
     </div>
 </nav>
+

@@ -1,13 +1,21 @@
 import { Component, inject, Input } from '@angular/core';
 import { NgClass, NgIf } from "@angular/common";
 import { AlertService } from "../../services/alert/alert.service";
+import { SuccessIconComponent } from "../icons/success-icon/success-icon.component";
+import { InfoIconComponent } from "../icons/info-icon/info-icon.component";
+import { WarningIconComponent } from "../icons/warning-icon/warning-icon.component";
+import { DangerIconComponent } from "../icons/danger-icon/danger-icon.component";
 
 @Component({
     selector: 'app-alert',
     standalone: true,
     imports: [
         NgClass,
-        NgIf
+        NgIf,
+        SuccessIconComponent,
+        InfoIconComponent,
+        WarningIconComponent,
+        DangerIconComponent
     ],
     templateUrl: './alert.component.html',
     styleUrl: './alert.component.css'
