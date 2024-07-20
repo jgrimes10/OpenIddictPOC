@@ -63,6 +63,7 @@ namespace IdentityAPI.Controllers
             var user = new User
             {
                 Username = model.Username,
+                EmailAddress = model.EmailAddress,
                 UserRoles = new List<UserRole>()
             };
 

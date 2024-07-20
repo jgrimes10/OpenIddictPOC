@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from "@angula
 import { AuthService } from "../../services/auth/auth.service";
 import { AlertService } from "../../services/alert/alert.service";
 import { AlertComponent } from "../../components/alert/alert.component";
+import { FormInputComponent } from '../../components/shared/form-input/form-input.component';
 
 @Component({
   selector: 'app-register',
@@ -11,7 +12,8 @@ import { AlertComponent } from "../../components/alert/alert.component";
     imports: [
         RouterLink,
         ReactiveFormsModule,
-        AlertComponent
+        AlertComponent,
+        FormInputComponent
     ],
   templateUrl: './register.component.html',
   styleUrl: './register.component.css'
@@ -27,6 +29,7 @@ export class RegisterComponent {
         this.registerForm = this.fb.group({
             username: ['', [Validators.required]],
             password: ['', [Validators.required]],
+            emailAddress: ['', [Validators.required, Validators.email]],
         });
     }
 

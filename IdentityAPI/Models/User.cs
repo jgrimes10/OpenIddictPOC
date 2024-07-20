@@ -16,6 +16,9 @@ namespace IdentityAPI.Models
         [Required]
         public string PasswordHash { get; set; }
 
+        [Required]
+        public string EmailAddress { get; set; }
+
         public List<UserRole> UserRoles { get; set; }
     }
 }

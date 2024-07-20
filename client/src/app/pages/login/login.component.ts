@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from "@angula
 import { AuthService } from "../../services/auth/auth.service";
 import { AlertComponent } from "../../components/alert/alert.component";
 import { AlertService } from "../../services/alert/alert.service";
+import { FormInputComponent } from '../../components/shared/form-input/form-input.component';
 
 @Component({
   selector: 'app-login',
@@ -11,7 +12,8 @@ import { AlertService } from "../../services/alert/alert.service";
     imports: [
         RouterLink,
         ReactiveFormsModule,
-        AlertComponent
+        AlertComponent,
+        FormInputComponent
     ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css'

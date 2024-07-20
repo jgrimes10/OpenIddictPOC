@@ -4,5 +4,6 @@ namespace IdentityAPI.Models
     {
         required public string Username { get; set; }
         required public string Password { get; set; }
+        required public string EmailAddress { get; set; }
     }
 }
