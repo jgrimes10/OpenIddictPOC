@@ -6,6 +6,11 @@ import { InfoIconComponent } from "../icons/info-icon/info-icon.component";
 import { WarningIconComponent } from "../icons/warning-icon/warning-icon.component";
 import { DangerIconComponent } from "../icons/danger-icon/danger-icon.component";
 
+/**
+ * AlertComponent is responsible for displaying alert messages of various types (success, info, warning, danger).
+ * It subscribes to the AlertService's alertState to receive and display alert messages.
+ * This component also handles the dynamic application of CSS classes based on the alert type to style the alert message accordingly.
+ */
 @Component({
     selector: 'app-alert',
     standalone: true,
@@ -25,6 +30,9 @@ export class AlertComponent {
 
     private alertService: AlertService = inject(AlertService);
 
+    /**
+     * Subscribes to the alertState observable of AlertService on component initialization to receive alert messages.
+     */
     ngOnInit(): void {
         this.alertService.alertState.subscribe({
             next: data => {
@@ -33,10 +41,18 @@ export class AlertComponent {
         });
     }
 
+    /**
+     * Clears the current alert message by calling the clearAlert method of AlertService.
+     */
     closeAlert(): void {
         this.alertService.clearAlert();
     }
 
+    /**
+     * Computes and returns the CSS classes for the alert based on its type.
+     * This enables dynamic styling of the alert message.
+     * @returns An object where each key is a CSS class and its value is a boolean indicating whether the class should be applied.
+     */
     get alertClasses() {
         return {
             'bg-green-100 border-green-400 text-green-700': this.alert?.type === 'success',

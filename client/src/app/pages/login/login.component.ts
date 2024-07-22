@@ -6,6 +6,12 @@ import { AlertComponent } from "../../components/alert/alert.component";
 import { AlertService } from "../../services/alert/alert.service";
 import { FormInputComponent } from '../../components/shared/form-input/form-input.component';
 
+/**
+ * LoginComponent is responsible for handling user login functionality.
+ * It creates and manages a login form, validates user input, and uses AuthService
+ * to authenticate users. Upon successful login, it navigates to the home page.
+ * In case of login failure, it displays an error message using AlertService.
+ */
 @Component({
   selector: 'app-login',
   standalone: true,
@@ -34,6 +40,11 @@ export class LoginComponent {
         });
     }
 
+    /**
+     * Handles the form submission. If the form is valid, it attempts to log in the user
+     * using the AuthService. On success, it navigates to the home page. On failure,
+     * it displays an error alert using the AlertService.
+     */
     onSubmit() {
         if (this.loginForm.valid) {
             const loginData = this.loginForm.value;

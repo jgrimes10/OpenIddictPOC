@@ -10,6 +10,9 @@ using OpenIddict.Server.AspNetCore;
 
 namespace IdentityAPI.Controllers
 {
+    /// <summary>
+    /// Handles authentication-related actions, including token generation and user registration.
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     public class AuthenticationController : ControllerBase
@@ -17,12 +20,21 @@ namespace IdentityAPI.Controllers
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AuthenticationController"/> class.
+        /// </summary>
+        /// <param name="userManager">The user manager for handling user-related operations.</param>
+        /// <param name="signInManager">The sign-in manager for handling user sign-in operations.</param>
         public AuthenticationController(UserManager<User> userManager, SignInManager<User> signInManager)
         {
             _userManager = userManager;
             _signInManager = signInManager;
         }
 
+        /// <summary>
+        /// Handles token generation requests for various grant types including password and refresh token grants.
+        /// </summary>
+        /// <returns>An action result that represents the outcome of the token generation process.</returns>
         [HttpPost("~/connect/token")]
         [Consumes("application/x-www-form-urlencoded")]
         [Produces("application/json")]
@@ -50,7 +62,11 @@ namespace IdentityAPI.Controllers
             });
         }
 
-        // Create new User.
+        /// <summary>
+        /// Registers a new user with the provided details.
+        /// </summary>
+        /// <param name="model">The registration details.</param>
+        /// <returns>An action result indicating the outcome of the registration process.</returns>
         [HttpPost("~/register")]
         [Consumes("application/x-www-form-urlencoded")]
         [Produces("application/json")]
@@ -113,6 +129,12 @@ namespace IdentityAPI.Controllers
             }
         }
 
+        /// <summary>
+        /// Processes the token request for the password grant type by authenticiating the user with the provided username and password.
+        /// If authentication is successful, generates and returns an access token along with any other requested information.
+        /// </summary>
+        /// <param name="request">The OpenIddict request containing the username and password submitted by the client.</param>
+        /// <returns>An IActionResult that may contain the generated access token if authentication is successful, or an Unauthorized result if not.</returns>
         private async Task<IActionResult> TokensForPasswordGrantType(OpenIddictRequest request)
         {
             var user = await _userManager.FindByNameAsync(request.Username);
