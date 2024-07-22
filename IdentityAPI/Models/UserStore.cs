@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace IdentityAPI.Models
 {
-    public class UserStore : IUserStore<User>, IUserPasswordStore<User>, IUserRoleStore<User>
+    public class UserStore : IUserStore<User>, IUserPasswordStore<User>, IUserRoleStore<User>, IUserEmailStore<User>
     {
         private readonly ApplicationDbContext _context;
 
@@ -123,6 +123,57 @@ namespace IdentityAPI.Models
         public Task<IdentityResult> UpdateAsync(User user, CancellationToken cancellationToken)
         {
             throw new System.NotImplementedException();
+        }
+
+        public Task SetEmailAsync(User user, string? email, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<string?> GetEmailAsync(User user, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> GetEmailConfirmedAsync(User user, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task SetEmailConfirmedAsync(User user, bool confirmed, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<User?> FindByEmailAsync(string normalizedEmail, CancellationToken cancellationToken)
+        {
+            // Ensure the cancellation token is not cancelled.
+            cancellationToken.ThrowIfCancellationRequested();
+
+            try
+            {
+                var user = _context.Users
+                    .Include(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role)
+                    .SingleOrDefaultAsync(u => u.EmailAddress.Equals(normalizedEmail), cancellationToken);
+                
+                return user;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("An error occurred while finding the user by email.", ex);
+            }
+        }
+
+        public Task<string?> GetNormalizedEmailAsync(User user, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(user.EmailAddress)!;
+        }
+
+        public Task SetNormalizedEmailAsync(User user, string? normalizedEmail, CancellationToken cancellationToken)
+        {
+            user.EmailAddress = normalizedEmail;
+            return Task.CompletedTask;
         }
     }
 }

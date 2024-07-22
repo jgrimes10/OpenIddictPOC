@@ -37,6 +37,8 @@ builder.Services.Configure<IdentityOptions>(options =>
     options.ClaimsIdentity.UserIdClaimType = OpenIddictConstants.Claims.Subject;
     options.ClaimsIdentity.RoleClaimType = OpenIddictConstants.Claims.Role;
 
+    options.User.RequireUniqueEmail = true;
+
     // Configure more if necessary.
 });
 

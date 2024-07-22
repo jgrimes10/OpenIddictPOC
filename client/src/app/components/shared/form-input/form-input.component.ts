@@ -20,6 +20,7 @@ export class FormInputComponent {
     @Input() type: string = 'text';
     @Input() required: boolean = false;
     @Input() errorMessages: { [key: string]: string } = {};
+    @Input() placeholderText: string = '';
 
     isTouched = false;
 

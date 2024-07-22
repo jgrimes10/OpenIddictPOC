@@ -3,6 +3,7 @@ using IdentityAPI.Models;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.IdentityModel.Tokens;
 using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
@@ -80,6 +81,35 @@ namespace IdentityAPI.Controllers
                     ModelState.AddModelError(string.Empty, error.Description);
                 }
                 return BadRequest(ModelState);
+            }
+        }
+
+        [HttpPost("~/forgot-password")]
+        [Consumes("application/x-www-form-urlencoded")]
+        public async Task<IActionResult> ForgotPassword([FromForm] ForgotPasswordModel forgotPasswordModel)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var user = await _userManager.FindByEmailAsync(forgotPasswordModel.EmailAddress.ToUpper());
+                if (user == null)
+                {
+                    return Ok(); // Do not reveal that the user does not exist.
+                }
+                
+                // Generate a password reset token.
+                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+                // Send email with password reset link.
+                return Ok(token);
+            }
+            catch (Exception e)
+            {
+                return BadRequest(new { Message = e.Message });
             }
         }
 

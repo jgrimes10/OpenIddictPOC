@@ -12,6 +12,7 @@ export class AuthService {
 
     private registerUrl = 'https://localhost:5001/register';
     private loginUrl = 'https://localhost:5001/connect/token';
+    private forgotPasswordUrl = 'https://localhost:5001/forgot-password';
 
     constructor() { }
 
@@ -59,5 +60,11 @@ export class AuthService {
         localStorage.removeItem('expires_in');
         localStorage.removeItem('scope');
         localStorage.removeItem('token_type');
+    }
+
+    forgotPassword(emailAddress: string): Observable<any> {
+        const headers = new HttpHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' });
+        const body = this.toUrlEncoded({ emailAddress });
+        return this.http.post(this.forgotPasswordUrl, body, { headers });
     }
 }
