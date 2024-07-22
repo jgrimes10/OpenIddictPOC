@@ -23,29 +23,32 @@ export class ForgotPasswordComponent {
 
     // Dependency injection
     private fb: FormBuilder = inject(FormBuilder);
-    private router: Router = inject(Router);
     private authService: AuthService = inject(AuthService);
     private alertService: AlertService = inject(AlertService);
 
     constructor() {
         this.forgotPasswordForm = this.fb.group({
-            email: ['', [Validators.required, Validators.email]]
+            username: ['', [Validators.required]]
         });
     }
 
     onSubmit(): void {
         if (this.forgotPasswordForm.valid) {
-            this.authService.forgotPassword(this.forgotPasswordForm.value.email)
+            this.authService.forgotPassword(this.forgotPasswordForm.value.username)
                 .subscribe({
                     next: (response) => {
                         // Handle successful response
                         this.alertService.showAlert('success', 'Forgot password email sent.');
-                        console.log('Sending forgot password email');
+                        const token = response.token;
+                        const username = this.forgotPasswordForm.value.username;
+                        const resetUrl = `${window.location.origin}/reset-password?token=${token}&username=${username}`;
+
+                        console.log('Sending forgot password email', resetUrl);
                     },
                     error: (error) => {
                         // Handle error response
                         this.alertService.showAlert('danger', 'Something went wrong sending the forgot password email.');
-                        console.error('Error sending forgot password email');
+                        console.error('Error sending forgot password email', error);
                     },
                 });
         }

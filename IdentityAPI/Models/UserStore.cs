@@ -32,6 +32,7 @@ namespace IdentityAPI.Models
 
         public void Dispose()
         {
+            _context?.Dispose();
         }
 
         public Task<User> FindByIdAsync(string userId, CancellationToken cancellationToken)
@@ -64,7 +65,17 @@ namespace IdentityAPI.Models
 
         public Task<string> GetUserIdAsync(User user, CancellationToken cancellationToken)
         {
-            throw new System.NotImplementedException();
+            // Ensure the cancellation token is not cancelled.
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Ensure the user object is not null
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            // Return the user id.
+            return Task.FromResult(user.Id.ToString());
         }
 
         public Task<string> GetUserNameAsync(User user, CancellationToken cancellationToken)
@@ -120,9 +131,46 @@ namespace IdentityAPI.Models
             throw new System.NotImplementedException();
         }
 
-        public Task<IdentityResult> UpdateAsync(User user, CancellationToken cancellationToken)
+        public async Task<IdentityResult> UpdateAsync(User user, CancellationToken cancellationToken)
         {
-            throw new System.NotImplementedException();
+            // Ensure the cancellation token is not cancelled.
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Ensure the user object is not null.
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            // Attach the user entity to the context and mark it as modified.
+            _context.Entry(user).State = EntityState.Modified;
+
+            // Attempt to save changes to the database.
+            try
+            {
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // Handle concurrency issues.
+                return IdentityResult.Failed(new IdentityError
+                {
+                    Code = nameof(DbUpdateConcurrencyException),
+                    Description = "Optimistic concurrency failure, object has been modified."
+                });
+            }
+            catch (Exception ex)
+            {
+                // Handle other potential errors.
+                return IdentityResult.Failed(new IdentityError
+                {
+                    Code = nameof(Exception),
+                    Description = ex.Message
+                });
+            }
+
+            // If no exceptions were thrown, return success.
+            return IdentityResult.Success;
         }
 
         public Task SetEmailAsync(User user, string? email, CancellationToken cancellationToken)
@@ -132,7 +180,17 @@ namespace IdentityAPI.Models
 
         public Task<string?> GetEmailAsync(User user, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            // Ensure the cancellation token is not cancelled.
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Ensure the user object is not null.
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            // Return the user's email.
+            return Task.FromResult(user.EmailAddress);
         }
 
         public Task<bool> GetEmailConfirmedAsync(User user, CancellationToken cancellationToken)

@@ -106,7 +106,8 @@ builder.Services.AddIdentity<User, Role>()
     .AddSignInManager()
     .AddUserStore<UserStore>()
     .AddRoleStore<RoleStore>()
-    .AddUserManager<UserManager<User>>();
+    .AddUserManager<UserManager<User>>()
+    .AddDefaultTokenProviders();
 
 builder.WebHost.UseUrls("http://localhost:5000", "https://localhost:5001");
 
