@@ -44,3 +44,5 @@ msbuild.wrn
 
 # Databases
 *.db
+*.db-shm
+*.db-wal

@@ -13,7 +13,7 @@ export const authGuard: CanActivateFn = (route, state) => {
         return true;
     } else {
         console.log('You must be logged into navigate here.');
-        alertService.showAlert('warning', 'You must be logged in to navigate here.');
+        alertService.showAlert('warning', 'You must be logged in.');
         router.navigate(['/login']);
         return false;
     }
