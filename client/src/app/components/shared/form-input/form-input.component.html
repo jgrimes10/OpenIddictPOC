@@ -2,6 +2,7 @@
     <label [for]="controlName" class="block text-sm font-medium text-gray-700">{{ label }}</label>
     <input [formControlName]="controlName" [type]="type" [id]="controlName"
            (blur)="onBlur()"
+           [placeholder]="placeholderText"
            [ngClass]="{
            'border-gray-300': !isInvalid,
            'border-red-500': isInvalid

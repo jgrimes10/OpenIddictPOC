@@ -1,8 +1,8 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from "@angular/common/http";
+import { HttpClient, HttpHeaders, HttpParams } from "@angular/common/http";
 import { Observable, tap } from "rxjs";
 
-import { RegisterUser, LoginUser } from "../../models/User";
+import { RegisterUser, LoginUser, ResetPassword } from "../../models/User";
 
 /**
  * AuthService provides authentication-related functionalities, including user registration,
@@ -17,6 +17,8 @@ export class AuthService {
 
     private registerUrl = 'https://localhost:5001/register';
     private loginUrl = 'https://localhost:5001/connect/token';
+    private forgotPasswordUrl = 'https://localhost:5001/forgot-password';
+    private resetPasswordUrl = 'https://localhost:5001/reset-password';
 
     constructor() { }
 
@@ -94,5 +96,17 @@ export class AuthService {
         localStorage.removeItem('expires_in');
         localStorage.removeItem('scope');
         localStorage.removeItem('token_type');
+    }
+
+    forgotPassword(username: string): Observable<any> {
+        const headers = new HttpHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' });
+        const body = this.toUrlEncoded({ username });
+        return this.http.post(this.forgotPasswordUrl, body, { headers });
+    }
+
+    resetPassword(data: any): Observable<any> {
+        const headers = new HttpHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' });
+        const body = this.toUrlEncoded(data);
+        return this.http.post(this.resetPasswordUrl, body, { headers });
     }
 }

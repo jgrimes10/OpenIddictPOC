@@ -3,6 +3,7 @@ using IdentityAPI.Models;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.IdentityModel.Tokens;
 using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
@@ -97,6 +98,67 @@ namespace IdentityAPI.Controllers
                 }
                 return BadRequest(ModelState);
             }
+        }
+
+        [HttpPost("~/forgot-password")]
+        [Consumes("application/x-www-form-urlencoded")]
+        public async Task<IActionResult> ForgotPassword([FromForm] ForgotPasswordModel forgotPasswordModel)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var user = await _userManager.FindByNameAsync(forgotPasswordModel.Username);
+                if (user == null)
+                {
+                    return Ok(); // Do not reveal that the user does not exist.
+                }
+                
+                // Generate a password reset token.
+                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+                // Send email with password reset link.
+                return Ok(new { token });
+            }
+            catch (Exception e)
+            {
+                return BadRequest(new { Message = e.Message });
+            }
+        }
+
+        [HttpPost("~/reset-password")]
+        [Consumes("application/x-www-form-urlencoded")]
+        public async Task<IActionResult> ResetPassword([FromForm] ResetPasswordModel resetPasswordModel)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var user = await _userManager.FindByNameAsync(resetPasswordModel.Username);
+            if (user == null)
+            {
+                // Return a generic message to avoid revealing user information.
+                return Ok(new { message = "Password reset successful." });
+            }
+
+            var decodedToken = Uri.UnescapeDataString(resetPasswordModel.Token);
+
+            var result = await _userManager.ResetPasswordAsync(user, decodedToken, resetPasswordModel.Password);
+            if (result.Succeeded)
+            {
+                return Ok(new { message = "Password reset successful." });
+            }
+
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
+
+            return BadRequest(ModelState);
         }
 
         /// <summary>

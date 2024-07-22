@@ -37,6 +37,8 @@ builder.Services.Configure<IdentityOptions>(options =>
     options.ClaimsIdentity.UserIdClaimType = OpenIddictConstants.Claims.Subject;
     options.ClaimsIdentity.RoleClaimType = OpenIddictConstants.Claims.Role;
 
+    options.User.RequireUniqueEmail = true;
+
     // Configure more if necessary.
 });
 
@@ -104,7 +106,8 @@ builder.Services.AddIdentity<User, Role>()
     .AddSignInManager()
     .AddUserStore<UserStore>()
     .AddRoleStore<RoleStore>()
-    .AddUserManager<UserManager<User>>();
+    .AddUserManager<UserManager<User>>()
+    .AddDefaultTokenProviders();
 
 builder.WebHost.UseUrls("http://localhost:5000", "https://localhost:5001");
 

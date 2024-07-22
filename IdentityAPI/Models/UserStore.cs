@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace IdentityAPI.Models
 {
-    public class UserStore : IUserStore<User>, IUserPasswordStore<User>, IUserRoleStore<User>
+    public class UserStore : IUserStore<User>, IUserPasswordStore<User>, IUserRoleStore<User>, IUserEmailStore<User>
     {
         private readonly ApplicationDbContext _context;
 
@@ -32,6 +32,7 @@ namespace IdentityAPI.Models
 
         public void Dispose()
         {
+            _context?.Dispose();
         }
 
         public Task<User> FindByIdAsync(string userId, CancellationToken cancellationToken)
@@ -64,7 +65,17 @@ namespace IdentityAPI.Models
 
         public Task<string> GetUserIdAsync(User user, CancellationToken cancellationToken)
         {
-            throw new System.NotImplementedException();
+            // Ensure the cancellation token is not cancelled.
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Ensure the user object is not null
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            // Return the user id.
+            return Task.FromResult(user.Id.ToString());
         }
 
         public Task<string> GetUserNameAsync(User user, CancellationToken cancellationToken)
@@ -120,9 +131,107 @@ namespace IdentityAPI.Models
             throw new System.NotImplementedException();
         }
 
-        public Task<IdentityResult> UpdateAsync(User user, CancellationToken cancellationToken)
+        public async Task<IdentityResult> UpdateAsync(User user, CancellationToken cancellationToken)
         {
-            throw new System.NotImplementedException();
+            // Ensure the cancellation token is not cancelled.
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Ensure the user object is not null.
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            // Attach the user entity to the context and mark it as modified.
+            _context.Entry(user).State = EntityState.Modified;
+
+            // Attempt to save changes to the database.
+            try
+            {
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // Handle concurrency issues.
+                return IdentityResult.Failed(new IdentityError
+                {
+                    Code = nameof(DbUpdateConcurrencyException),
+                    Description = "Optimistic concurrency failure, object has been modified."
+                });
+            }
+            catch (Exception ex)
+            {
+                // Handle other potential errors.
+                return IdentityResult.Failed(new IdentityError
+                {
+                    Code = nameof(Exception),
+                    Description = ex.Message
+                });
+            }
+
+            // If no exceptions were thrown, return success.
+            return IdentityResult.Success;
+        }
+
+        public Task SetEmailAsync(User user, string? email, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<string?> GetEmailAsync(User user, CancellationToken cancellationToken)
+        {
+            // Ensure the cancellation token is not cancelled.
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Ensure the user object is not null.
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            // Return the user's email.
+            return Task.FromResult(user.EmailAddress);
+        }
+
+        public Task<bool> GetEmailConfirmedAsync(User user, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task SetEmailConfirmedAsync(User user, bool confirmed, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<User?> FindByEmailAsync(string normalizedEmail, CancellationToken cancellationToken)
+        {
+            // Ensure the cancellation token is not cancelled.
+            cancellationToken.ThrowIfCancellationRequested();
+
+            try
+            {
+                var user = _context.Users
+                    .Include(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role)
+                    .SingleOrDefaultAsync(u => u.EmailAddress.Equals(normalizedEmail), cancellationToken);
+                
+                return user;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("An error occurred while finding the user by email.", ex);
+            }
+        }
+
+        public Task<string?> GetNormalizedEmailAsync(User user, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(user.EmailAddress)!;
+        }
+
+        public Task SetNormalizedEmailAsync(User user, string? normalizedEmail, CancellationToken cancellationToken)
+        {
+            user.EmailAddress = normalizedEmail;
+            return Task.CompletedTask;
         }
     }
 }
