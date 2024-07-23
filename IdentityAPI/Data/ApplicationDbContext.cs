@@ -15,7 +15,7 @@ namespace IdentityAPI.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<User>().HasIndex(u => u.Username).IsUnique();
+            // modelBuilder.Entity<User>().HasIndex(u => u.Username).IsUnique();
 
             modelBuilder.Entity<UserRole>().HasKey(ur => new { ur.RoleId, ur.UserId });
             modelBuilder.Entity<UserRole>().HasOne(ur => ur.User).WithMany(u => u.UserRoles).HasForeignKey(ur => ur.UserId);

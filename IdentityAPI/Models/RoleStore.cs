@@ -1,9 +1,17 @@
+using IdentityAPI.Data;
 using Microsoft.AspNetCore.Identity;
 
 namespace IdentityAPI.Models
 {
     public class RoleStore : IRoleStore<Role>
     {
+        private readonly ApplicationDbContext _dbContext;
+
+        public RoleStore(ApplicationDbContext dbContext)
+        {
+            _dbContext = dbContext;
+        }
+        
         public Task<IdentityResult> CreateAsync(Role role, CancellationToken cancellationToken)
         {
             throw new System.NotImplementedException();
@@ -16,6 +24,7 @@ namespace IdentityAPI.Models
 
         public void Dispose()
         {
+            _dbContext.Dispose();
         }
 
         public Task<Role> FindByIdAsync(string roleId, CancellationToken cancellationToken)

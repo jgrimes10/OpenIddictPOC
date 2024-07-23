@@ -4,7 +4,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace IdentityAPI.Models
 {
-    public class UserStore : IUserStore<User>, IUserPasswordStore<User>, IUserRoleStore<User>, IUserEmailStore<User>
+    public class UserStore : 
+        IUserPasswordStore<User>,
+        IUserRoleStore<User>,
+        IUserEmailStore<User>,
+        IUserAuthenticatorKeyStore<User>,
+        IUserTwoFactorStore<User>
     {
         private readonly ApplicationDbContext _context;
 
@@ -45,7 +50,7 @@ namespace IdentityAPI.Models
             return await _context.Users
                 .Include(u => u.UserRoles)
                 .ThenInclude(ur => ur.Role)
-                .SingleOrDefaultAsync(u => u.Username == normalizedUserName, cancellationToken);
+                .SingleOrDefaultAsync(u => u.UserName == normalizedUserName, cancellationToken);
         }
 
         public Task<string> GetNormalizedUserNameAsync(User user, CancellationToken cancellationToken)
@@ -58,9 +63,23 @@ namespace IdentityAPI.Models
             return Task.FromResult(user.PasswordHash);
         }
 
-        public Task<IList<string>> GetRolesAsync(User user, CancellationToken cancellationToken)
+        public async Task<IList<string>> GetRolesAsync(User user, CancellationToken cancellationToken)
         {
-            throw new System.NotImplementedException();
+               // Ensure the cancellation token is not cancelled.
+               cancellationToken.ThrowIfCancellationRequested();
+   
+               // Ensure the user object is not null
+               if (user == null)
+               {
+                   throw new ArgumentNullException(nameof(user));
+               }
+
+               var userRoles = await _context.UserRoles
+                   .Where(ur => ur.UserId == user.Id)
+                   .Join(_context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name)
+                   .ToListAsync(cancellationToken);
+
+               return userRoles!;
         }
 
         public Task<string> GetUserIdAsync(User user, CancellationToken cancellationToken)
@@ -78,9 +97,9 @@ namespace IdentityAPI.Models
             return Task.FromResult(user.Id.ToString());
         }
 
-        public Task<string> GetUserNameAsync(User user, CancellationToken cancellationToken)
+        public Task<string?> GetUserNameAsync(User user, CancellationToken cancellationToken)
         {
-            return Task.FromResult(user.Username);
+            return Task.FromResult(user.UserName);
         }
 
         public Task<IList<User>> GetUsersInRoleAsync(string roleName, CancellationToken cancellationToken)
@@ -105,7 +124,7 @@ namespace IdentityAPI.Models
 
         public Task SetNormalizedUserNameAsync(User user, string normalizedName, CancellationToken cancellationToken)
         {
-            user.Username = normalizedName;
+            user.UserName = normalizedName;
             return Task.CompletedTask;
         }
 
@@ -190,7 +209,7 @@ namespace IdentityAPI.Models
             }
 
             // Return the user's email.
-            return Task.FromResult(user.EmailAddress);
+            return Task.FromResult(user.Email);
         }
 
         public Task<bool> GetEmailConfirmedAsync(User user, CancellationToken cancellationToken)
@@ -213,7 +232,7 @@ namespace IdentityAPI.Models
                 var user = _context.Users
                     .Include(u => u.UserRoles)
                     .ThenInclude(ur => ur.Role)
-                    .SingleOrDefaultAsync(u => u.EmailAddress.Equals(normalizedEmail), cancellationToken);
+                    .SingleOrDefaultAsync(u => u.Email.Equals(normalizedEmail), cancellationToken);
                 
                 return user;
             }
@@ -225,13 +244,73 @@ namespace IdentityAPI.Models
 
         public Task<string?> GetNormalizedEmailAsync(User user, CancellationToken cancellationToken)
         {
-            return Task.FromResult(user.EmailAddress)!;
+            return Task.FromResult(user.Email)!;
         }
 
         public Task SetNormalizedEmailAsync(User user, string? normalizedEmail, CancellationToken cancellationToken)
         {
-            user.EmailAddress = normalizedEmail;
+            user.Email = normalizedEmail;
             return Task.CompletedTask;
+        }
+
+        public Task SetAuthenticatorKeyAsync(User user, string key, CancellationToken cancellationToken)
+        {
+            // Ensure the cancellation token is not cancelled.
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Ensure the user object is not null.
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            user.AuthenticatorKey = key;
+
+            return Task.CompletedTask;
+        }
+
+        public Task<string?> GetAuthenticatorKeyAsync(User user, CancellationToken cancellationToken)
+        {
+            // Ensure the cancellation token is not cancelled.
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Ensure the user object is not null.
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            return Task.FromResult(user.AuthenticatorKey);
+        }
+
+        public Task SetTwoFactorEnabledAsync(User user, bool enabled, CancellationToken cancellationToken)
+        {
+            // Ensure the cancellation token is not cancelled.
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Ensure the user object is not null.
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            user.TwoFactorEnabled = enabled;
+
+            return Task.CompletedTask;
+        }
+
+        public Task<bool> GetTwoFactorEnabledAsync(User user, CancellationToken cancellationToken)
+        {
+            // Ensure the cancellation token is not cancelled.
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Ensure the user object is not null.
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            return Task.FromResult(user.TwoFactorEnabled);
         }
     }
 }

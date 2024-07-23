@@ -49,10 +49,13 @@ builder.Services.AddOpenIddict()
     {
         // Enable the required endpoints.
         options.SetTokenEndpointUris("/connect/token");
+        options.SetAuthorizationEndpointUris("/connect/authorize");
         options.SetUserinfoEndpointUris("/connect/userinfo");
 
         options.AllowPasswordFlow();
         options.AllowRefreshTokenFlow();
+        options.AllowAuthorizationCodeFlow()
+            .AllowImplicitFlow();
 
         // Add all auth flows you want to support.
         // Supported flows are:
@@ -88,7 +91,9 @@ builder.Services.AddOpenIddict()
             .AddDevelopmentSigningCertificate();
         
         // Register ASP.NET Core host and configuration options.
-        options.UseAspNetCore().EnableTokenEndpointPassthrough();
+        options.UseAspNetCore()
+            .EnableTokenEndpointPassthrough()
+            .EnableAuthorizationEndpointPassthrough();
     })
     .AddValidation(options =>
     {
@@ -102,7 +107,10 @@ builder.Services.AddAuthentication(options =>
     options.DefaultChallengeScheme = OpenIddictConstants.Schemes.Basic;
 });
 
-builder.Services.AddIdentity<User, Role>()
+builder.Services.AddIdentity<User, Role>(options =>
+{
+    options.Tokens.AuthenticatorTokenProvider = TokenOptions.DefaultAuthenticatorProvider;
+})
     .AddSignInManager()
     .AddUserStore<UserStore>()
     .AddRoleStore<RoleStore>()

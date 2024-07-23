@@ -33,6 +33,8 @@ export class LoginComponent {
     private authService: AuthService = inject(AuthService);
     private alertService: AlertService = inject(AlertService);
 
+    qrCodeUri = 'otpauth://totp/JDOE@TEST.COM?secret=EKPCLLN766VPQKDAFFBPPIOBQH6YGY5A&issuer=IdentityAPI&digits=6';
+
     constructor() {
         this.loginForm = this.fb.group({
             username: ['', [Validators.required]],

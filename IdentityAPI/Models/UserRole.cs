@@ -6,7 +6,7 @@ namespace IdentityAPI.Models
     public class UserRole
     {
         [ForeignKey(nameof(IdentityAPI.Models.User.Id))]
-        public Guid UserId { get; set; }
+        public string UserId { get; set; }
         required public User User { get; set; }
 
         [ForeignKey(nameof(IdentityAPI.Models.Role.Id))]
