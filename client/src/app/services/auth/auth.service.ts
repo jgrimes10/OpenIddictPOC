@@ -19,6 +19,9 @@ export class AuthService {
     private loginUrl = 'https://localhost:5001/connect/token';
     private forgotPasswordUrl = 'https://localhost:5001/forgot-password';
     private resetPasswordUrl = 'https://localhost:5001/reset-password';
+    private enableAuthenticatorUrl = 'https://localhost:5001/enable-authenticator';
+    private confirmAuthenticatorToEnableUrl = 'https://localhost:5001/confirm-authenticator';
+    private disableAuthenticatorUrl = 'https://localhost:5001/disable-authenticator';
 
     constructor() { }
 
@@ -41,6 +44,7 @@ export class AuthService {
     login(data: LoginUser): Observable<any> {
         const headers = new HttpHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' });
         const body = this.toUrlEncoded(data);
+        console.log(body);
         return this.http.post(this.loginUrl, body, { headers }).pipe(
             tap({
                 next: (response: any) => {
@@ -48,6 +52,26 @@ export class AuthService {
                 }
             })
         );
+    }
+
+    enableMfaAuthenticator(username: string): Observable<any> {
+        const headers = new HttpHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' });
+        const body = this.toUrlEncoded({ username });
+        console.log(`Sending request to ${this.enableAuthenticatorUrl} with body ${body}`);
+        return this.http.post(this.enableAuthenticatorUrl, body, { headers });
+    }
+
+    confirmAuthenticatorToEnable(username: string, code: string): Observable<any> {
+        const headers = new HttpHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' });
+        const body = this.toUrlEncoded({ username, code });
+        console.log(`Sending request to ${this.enableAuthenticatorUrl} with body ${body}`);
+        return this.http.post(this.confirmAuthenticatorToEnableUrl, body, { headers });
+    }
+
+    disableMfaAuthenticator(username: string): Observable<any> {
+        const headers = new HttpHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' });
+        const body = this.toUrlEncoded(username);
+        return this.http.post(this.disableAuthenticatorUrl, body, { headers });
     }
 
     /**

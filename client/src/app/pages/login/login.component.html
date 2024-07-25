@@ -30,6 +30,19 @@
                 </div>
             </div>
 
+            <!-- MFA Code -->
+            <div class="mb-6" *ngIf="requires2FA">
+                <app-form-input
+                    [formGroup]="loginForm"
+                    controlName="code"
+                    label="Multi-factor code"
+                    type="text"
+                    [required]="requires2FA"
+                    [errorMessages]="{
+                        required: 'Multi-factor code is required'
+                    }"></app-form-input>
+            </div>
+
             <img [src]="qrCodeUri" alt="QR Code" />
 
             <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md shadow hover:bg-indigo-700 focus:outline-none">Login</button>

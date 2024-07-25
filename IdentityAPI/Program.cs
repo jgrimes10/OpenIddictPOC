@@ -1,9 +1,9 @@
 using IdentityAPI.Data;
 using IdentityAPI.Models;
+using IdentityAPI.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using OpenIddict.Abstractions;
-using Microsoft.Extensions.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +22,8 @@ builder.Services.AddCors(options =>
         .AllowAnyHeader()
         .AllowAnyMethod());
 });
+
+builder.Services.AddScoped<MfaService>();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {

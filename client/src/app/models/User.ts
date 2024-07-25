@@ -1,6 +1,7 @@
 export interface LoginUser {
     Username: string
     Password: string
+    mfaCode: string | undefined
 }
 
 export interface RegisterUser {

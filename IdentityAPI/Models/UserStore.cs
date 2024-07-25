@@ -9,7 +9,9 @@ namespace IdentityAPI.Models
         IUserRoleStore<User>,
         IUserEmailStore<User>,
         IUserAuthenticatorKeyStore<User>,
-        IUserTwoFactorStore<User>
+        IUserTwoFactorStore<User>,
+        IUserPhoneNumberStore<User>,
+        IUserSecurityStampStore<User>
     {
         private readonly ApplicationDbContext _context;
 
@@ -214,7 +216,16 @@ namespace IdentityAPI.Models
 
         public Task<bool> GetEmailConfirmedAsync(User user, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            // Ensure the cancellation token is not cancelled.
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Ensure the user object is not null.
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            return Task.FromResult(user.EmailConfirmed);
         }
 
         public Task SetEmailConfirmedAsync(User user, bool confirmed, CancellationToken cancellationToken)
@@ -311,6 +322,64 @@ namespace IdentityAPI.Models
             }
 
             return Task.FromResult(user.TwoFactorEnabled);
+        }
+
+        public Task SetPhoneNumberAsync(User user, string? phoneNumber, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<string?> GetPhoneNumberAsync(User user, CancellationToken cancellationToken)
+        {
+            // Ensure the cancellation token is not cancelled.
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Ensure the user object is not null.
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            return Task.FromResult(user.PhoneNumber);
+        }
+
+        public Task<bool> GetPhoneNumberConfirmedAsync(User user, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task SetPhoneNumberConfirmedAsync(User user, bool confirmed, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task SetSecurityStampAsync(User user, string stamp, CancellationToken cancellationToken)
+        {
+            // Ensure the cancellation token is not cancelled.
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Ensure the user object is not null.
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            user.SecurityStamp = stamp;
+            return Task.CompletedTask;
+        }
+
+        public Task<string?> GetSecurityStampAsync(User user, CancellationToken cancellationToken)
+        {
+            // Ensure the cancellation token is not cancelled.
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Ensure the user object is not null.
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            return Task.FromResult(user.SecurityStamp);
         }
     }
 }

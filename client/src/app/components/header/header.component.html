@@ -22,9 +22,20 @@
                 Home
             </a>
         </div>
-        <div>
+        <div class="flex align-middle">
+            <div *ngIf="isLoggedIn" class="text-white pr-8 py-2 hover:text-gray-300">
+                <a routerLink="/user-settings">My Account</a>
+            </div>
             <div *ngIf="isLoggedIn" class="text-white">
                 <button (click)="logout()" class="border px-4 py-2 rounded">Logout</button>
+            </div>
+            <div *ngIf="!isLoggedIn" class="flex align-middle">
+                <div class="text-white py-2 px-4 hover:text-gray-300">
+                    <a routerLink="/login">Sign In</a>
+                </div>
+                <div class="text-white py-2 px-4">
+                    <a routerLink="/register" class="border rounded-xl px-4 py-2 hover:border-gray-300 hover:text-gray-300">Sign Up</a>
+                </div>
             </div>
         </div>
     </div>

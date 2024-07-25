@@ -5,6 +5,7 @@ import { AuthService } from "../../services/auth/auth.service";
 import { AlertComponent } from "../../components/alert/alert.component";
 import { AlertService } from "../../services/alert/alert.service";
 import { FormInputComponent } from '../../components/shared/form-input/form-input.component';
+import { NgIf } from "@angular/common";
 
 /**
  * LoginComponent is responsible for handling user login functionality.
@@ -19,13 +20,16 @@ import { FormInputComponent } from '../../components/shared/form-input/form-inpu
         RouterLink,
         ReactiveFormsModule,
         AlertComponent,
-        FormInputComponent
+        FormInputComponent,
+        NgIf
     ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css'
 })
 export class LoginComponent {
     loginForm: FormGroup;
+    requires2FA: boolean = false;
+    mfaToken: string | undefined;
 
     // Dependency injection.
     private fb: FormBuilder = inject(FormBuilder);
@@ -39,6 +43,7 @@ export class LoginComponent {
         this.loginForm = this.fb.group({
             username: ['', [Validators.required]],
             password: ['', [Validators.required]],
+            code: [''],
         });
     }
 
@@ -56,9 +61,14 @@ export class LoginComponent {
 
             this.authService.login(loginData).subscribe({
                 next: (response: any) => {
-                    console.log('Login successful', response);
-                    // Handle success, maybe redirect to another page.
-                    this.router.navigate(['/home']);
+                    if (response.requires2FA) {
+                        this.requires2FA = true;
+                        this.mfaToken = response.token;
+                    } else {
+                        console.log('Login successful', response);
+                        // Handle success, maybe redirect to another page.
+                        this.router.navigate(['/home']);
+                    }
                 },
                 error: (error) => {
                     console.error('Login error', error);

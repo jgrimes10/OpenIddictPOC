@@ -2,8 +2,8 @@
 
 namespace IdentityAPI.Models;
 
-public class Verify2FAEnableRequest
+public class VerifyAuthenticatorToEnableRequest
 {
-    [Required] public required string Email { get; set; }
+    [Required] public required string Username { get; set; }
     [Required] public required string Code { get; set; }
 }

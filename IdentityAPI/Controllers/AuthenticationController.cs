@@ -1,8 +1,7 @@
 using System.Security.Claims;
-using System.Text;
 using IdentityAPI.Models;
+using IdentityAPI.Services;
 using Microsoft.AspNetCore;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -20,16 +19,19 @@ namespace IdentityAPI.Controllers
     {
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
+        private readonly MfaService _mfaService;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AuthenticationController"/> class.
         /// </summary>
         /// <param name="userManager">The user manager for handling user-related operations.</param>
         /// <param name="signInManager">The sign-in manager for handling user sign-in operations.</param>
-        public AuthenticationController(UserManager<User> userManager, SignInManager<User> signInManager)
+        /// <param name="mfaService">The service for handling MFA operations.</param>
+        public AuthenticationController(UserManager<User> userManager, SignInManager<User> signInManager, MfaService mfaService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _mfaService = mfaService;
         }
 
         /// <summary>
@@ -60,14 +62,14 @@ namespace IdentityAPI.Controllers
                 }
                 
                 // Ensure the user is allowed to sign in.
-                if (!await _signInManager.CanSignInAsync(user))
-                {
-                    return BadRequest(new OpenIddictResponse
-                    {
-                        Error = OpenIddictConstants.Errors.InvalidGrant,
-                        ErrorDescription = "The specified user is not allowed to sign in."
-                    });
-                }
+                //if (!await _signInManager.CanSignInAsync(user))
+                //{
+                    //return BadRequest(new OpenIddictResponse
+                    //{
+                        //Error = OpenIddictConstants.Errors.InvalidGrant,
+                        //ErrorDescription = "The specified user is not allowed to sign in."
+                    //});
+                //}
                 
                 // Ensure the password is valid.
                 if (!await _userManager.CheckPasswordAsync(user, oidcRequest.Password))
@@ -87,40 +89,79 @@ namespace IdentityAPI.Controllers
                 // Reject the token request if two-factor authentication has been enabled by the user.
                 if (_userManager.SupportsUserTwoFactor && await _userManager.GetTwoFactorEnabledAsync(user))
                 {
-                    var token = await _userManager.GenerateUserTokenAsync(user, TokenOptions.DefaultProvider,
-                        "TwoFactor");
-                    return Ok(new { Requires2FA = true, Token = token });
+                    var mfaMethod = await _mfaService.GetMfaMethodAsync(user);
+                    
+                    // User tried signing in without a code AND they have mfa turned on.
+                    if (string.IsNullOrWhiteSpace(oidcRequest.Code))
+                    {
+                        // Generate a token to return for the 2FA.
+                        var token = await _userManager.GenerateUserTokenAsync(user, TokenOptions.DefaultProvider,
+                            "TwoFactor");
+
+                        switch (mfaMethod)
+                        {
+                            case MfaMethod.Sms:
+                                // The user has SMS as their MFA method, so we need to generate a code to send to them.
+                                var code = await _userManager.GenerateTwoFactorTokenAsync(user, TokenOptions.DefaultPhoneProvider);
+                                
+                                // TODO: Don't send the code back here! Eventually it will be sent via Email/SMS.
+                                return Ok(new { Requires2FA = true, Token = token, Code = code });
+                            
+                            case MfaMethod.Authenticator:
+                                // The user has an authenticator as their MFA method, just send back the token.
+                                return Ok(new { Requires2FA = true, Token = token });
+                            
+                            case MfaMethod.None:
+                                // Something has gone wrong... The user has MFA turned on but no method of MFA...
+                                throw new Exception("Mfa method mismatch - Login attempt.");
+                        }
+                    }
+
+                    // The user is signing in with a code in the request, now we need to check it.
+                    switch (mfaMethod)
+                    {
+                        case MfaMethod.Sms:
+                            if (!await VerifySmsToken(user, oidcRequest.Code))
+                            {
+                                return BadRequest(new OpenIddictResponse
+                                {
+                                     Error = OpenIddictConstants.Errors.InvalidRequest,
+                                     ErrorDescription = "Invalid SMS code."
+                                });       
+                            }
+                            break;
+                            
+                        case MfaMethod.Authenticator:
+                            if (!await VerifyAuthorizationToken(user, oidcRequest.Code))
+                            {
+                                return BadRequest(new OpenIddictResponse
+                                {
+                                    Error = OpenIddictConstants.Errors.InvalidRequest,
+                                    ErrorDescription = "Invalid authorization code."
+                                });
+                            }
+                            break;
+                        
+                        case MfaMethod.None:
+                            // Again, something has gone wrong, and we should never have mfa turned on
+                            // without a type of mfa selected.
+                            throw new Exception("Mfa method mismatch - login verification.");
+                    }
+                    //if (!await Verify2FaCodeAsync(user, oidcRequest.Token, oidcRequest.Code))
+                    //{
+                        //return BadRequest(new OpenIddictResponse
+                        //{
+                            //Error = OpenIddictConstants.Errors.InvalidRequest,
+                            //ErrorDescription = "Invalid mfa code."
+                        //});
+                    //}
                 }
 
-                if (_userManager.SupportsUserLockout)
-                {
-                    await _userManager.ResetAccessFailedCountAsync(user);
-                }
+                //if (_userManager.SupportsUserLockout)
+                //{
+                    //await _userManager.ResetAccessFailedCountAsync(user);
+                //}
                 
-                return await TokensForPasswordGrantType(oidcRequest);
-            }
-            
-            // Two-factor auth flow.
-            if (oidcRequest.IsAuthorizationCodeGrantType())
-            {
-                var result =
-                    await HttpContext.AuthenticateAsync(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
-                
-                var user = await _userManager.GetUserAsync(result.Principal);
-                if (user == null)
-                {
-                    return Forbid(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
-                }
-                
-                // Check if 2FA was already verified.
-                if (!result.Principal.HasClaim(c => c.Type == "2fa_verified"))
-                {
-                    // If not verified, the client needs to submit the 2FA code.
-                    return Forbid(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
-                }
-                
-                // var principle = await CreatePrincipleAsync(user, oidcRequest);
-                // return SignIn(principle, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
                 return await TokensForPasswordGrantType(oidcRequest);
             }
 
@@ -239,8 +280,9 @@ namespace IdentityAPI.Controllers
             return BadRequest(ModelState);
         }
 
-        [HttpPost("~/enable-2fa")]
+        [HttpPost("~/enable-authenticator")]
         [Consumes("application/x-www-form-urlencoded")]
+        [Produces("application/json")]
         public async Task<IActionResult> EnableAuthenticator([FromForm] UserEnableAuthenticatorModel enableAuthenticatorModel)
         {
             var user = await _userManager.FindByNameAsync(enableAuthenticatorModel.Username);
@@ -265,64 +307,130 @@ namespace IdentityAPI.Controllers
             return Ok(model);
         }
 
-        [HttpPost("~/confirm-2fa")]
+        [HttpPost("~/disable-authenticator")]
         [Consumes("application/x-www-form-urlencoded")]
-        public async Task<IActionResult> Confirm2FaToEnable([FromForm] Verify2FAEnableRequest model)
+        [Produces("application/json")]
+        public async Task<IActionResult> DisableAuthenticator(
+            [FromForm] UserEnableAuthenticatorModel enableAuthenticatorModel)
         {
-            var user = await _userManager.FindByEmailAsync(model.Email);
+            var user = await _userManager.FindByNameAsync(enableAuthenticatorModel.Username);
+            if (user == null)
+            {
+                return NotFound("User not found.");
+            }
+
+            await _mfaService.DisableMfaAsync(user);
+            return Ok("2FA has been disabled.");
+        }
+
+        [HttpPost("~/confirm-authenticator")]
+        [Consumes("application/x-www-form-urlencoded")]
+        [Produces("application/json")]
+        public async Task<IActionResult> Confirm2FaToEnable([FromForm] VerifyAuthenticatorToEnableRequest model)
+        {
+            var user = await _userManager.FindByNameAsync(model.Username);
             if (user == null)
             {
                 return Unauthorized();
             }
 
             // Check if the given code is valid for this user.
-            var valid = await Verify2FACode(user, model.Code);
+            var valid = await VerifyAuthorizationToken(user, model.Code);
 
             if (!valid)
             {
                 return Unauthorized("Invalid 2FA token.");
             }
 
-            await _userManager.SetTwoFactorEnabledAsync(user, true);
+            await _mfaService.SetMfaMethodAsync(user, MfaMethod.Authenticator);
             return Ok("2FA has been enabled.");
         }
 
-        [HttpPost("~/verify-2fa")]
+        [HttpPost("~/enable-sms-mfa")]
         [Consumes("application/x-www-form-urlencoded")]
-        public async Task<IActionResult> Verify2Fa([FromForm] Verify2FaLoginRequest model)
+        [Produces("application/json")]
+        public async Task<IActionResult> EnableSmsMfa([FromForm] string username)
         {
-            var user = await _userManager.FindByEmailAsync(model.Email);
+            var user = await _userManager.FindByNameAsync(username);
             if (user == null)
             {
-                return Unauthorized("Invalid 2FA attempt.");
+                return Unauthorized();
             }
-            
-            // Check if the token is valid.
-            var isTokenValid =
-                await _userManager.VerifyUserTokenAsync(user, TokenOptions.DefaultProvider, "TwoFactor", model.Token);
-            if (!isTokenValid)
-            {
-                return Unauthorized("Invalid 2FA token.");
-            }
-            
-            // Check if the given code is valid for this user.
-            var is2FaCodeValid = await Verify2FACode(user, model.Code);
-            if (!is2FaCodeValid)
-            {
-                return Unauthorized("Invalid 2FA code.");
-            }
-            
-            // If both tokens are valid, issue the 2fa_verified token.
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, user.UserName),
-                new Claim("2fa_verified", "true")
-            };
 
-            return BadRequest();
+            var code = await _userManager.GenerateTwoFactorTokenAsync(user, TokenOptions.DefaultPhoneProvider);
+            return Ok(new { code });
         }
 
-        private async Task<bool> Verify2FACode(User user, string code)
+        [HttpPost("~/disable-sms-mfa")]
+        [Consumes("application/x-www-form-urlencoded")]
+        [Produces("application/json")]
+        public async Task<IActionResult> DisableSmsMfa([FromForm] string username)
+        {
+            // Should we require the code to disable? As a security measure so an unintended user
+            // of the device cannot disable 2FA. This may require "employee" intervention though
+            // if the user changes their phone number and can no longer receive SMS messages.
+            var user = await _userManager.FindByNameAsync(username);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            await _mfaService.DisableMfaAsync(user);
+            return Ok("SMS MFA has been disabled.");
+        }
+
+        [HttpPost("~/verify-sms-mfa")]
+        [Consumes("application/x-www-form-urlencoded")]
+        [Produces("application/json")]
+        public async Task<IActionResult> ConfirmToEnableSmsMfa([FromForm] string username, [FromForm] string code)
+        {
+            var user = await _userManager.FindByNameAsync(username);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+            
+            // Check if the provided code is valid.
+            var isValid = await VerifySmsToken(user, code);
+            if (!isValid)
+            {
+                return Unauthorized("Code is invalid.");
+            }
+
+            await _mfaService.SetMfaMethodAsync(user, MfaMethod.Sms);
+            return Ok("SMS MFA has been enabled.");
+        }
+
+        private async Task<bool> Verify2FaCodeAsync(User user, string token, string code)
+        {
+            var is2faTokenValid = await _userManager.VerifyUserTokenAsync(user, TokenOptions.DefaultProvider, "TwoFactor", token);
+            // THIS IS WRONG, DONE FOR TESTING.
+            if (is2faTokenValid)
+            {
+                return false;
+            }
+
+            var verificationCode = code.Replace(" ", string.Empty).Replace("-", string.Empty);
+
+            return await VerifyAuthorizationToken(user, verificationCode);
+        }
+
+        // TODO: Probably can combine the verify methods and pass in the auth type to determine which provider to use.
+        private async Task<bool> VerifySmsToken(User user, string code)
+        {
+            var verificationCode = code.Replace(" ", string.Empty).Replace("-", string.Empty);
+            var is1FaTokenValid = await _userManager.VerifyTwoFactorTokenAsync(user,
+                TokenOptions.DefaultPhoneProvider, verificationCode);
+
+            if (!is1FaTokenValid)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private async Task<bool> VerifyAuthorizationToken(User user, string code)
         {
             var verificationCode = code.Replace(" ", string.Empty).Replace("-", string.Empty);
             var is1FaTokenValid = await _userManager.VerifyTwoFactorTokenAsync(user,
@@ -338,7 +446,7 @@ namespace IdentityAPI.Controllers
 
         private string GenerateQrCodeUri(string email, string key)
         {
-            return string.Format("ootpauth://totp/{0}?secret={1}&issuer={2}&digits=6", email, key, "IdentityAPI");
+            return string.Format("otpauth://totp/{0}?secret={1}&issuer={2}&digits=6", email, key, "IdentityAPI");
         }
 
         /// <summary>
